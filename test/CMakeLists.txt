@@ -148,6 +148,7 @@ list( APPEND ufo_test_input
   testinput/qc_poisson_disk_thinning.yaml
   testinput/qc_poisson_disk_thinning_unittests.yaml
   testinput/qc_preqc.yaml
+  testinput/qc_satwind_260.yaml
   testinput/qc_thinning.yaml
   testinput/qc_temporal_thinning.yaml
   testinput/qc_temporal_thinning_unittests.yaml
@@ -1068,6 +1069,13 @@ ecbuild_add_test( TARGET  test_ufo_opr_radarradialvelocity
                   TEST_DEPENDS ufo_get_ioda_test_data )
 
 # Test UFO ObsFilters (generic)
+
+ecbuild_add_test( TARGET  test_ufo_qc_satwind_260
+                  MPI     1 #4
+                  COMMAND ${CMAKE_BINARY_DIR}/bin/test_ObsFilters.x
+                  ARGS    "testinput/qc_satwind_260.yaml"
+                  ENVIRONMENT OOPS_TRAPFPE=1
+                  DEPENDS test_ObsFilters.x )
 
 ecbuild_add_test( TARGET  test_ufo_qc_gen_processwhere
                   SOURCES mains/TestProcessWhere.cc

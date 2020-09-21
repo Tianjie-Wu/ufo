@@ -1,0 +1,93 @@
+window begin: 2018-04-14T21:00:00Z
+window end: 2018-04-15T03:00:00Z
+
+observations: # type 260|VIIRS|NC005091| id 224 and 225
+- obs operator:
+    name: VertInterp
+    VertCoord: air_pressure
+  obs space:
+    name: Satwind 
+    obsdatain:
+      obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_ms.nc4 #71x2=142 U and Vobs
+    obsdataout:
+      obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_ms_test_filter.nc4
+    simulated variables: [eastward_wind,northward_wind]
+  geovals:
+    filename: Data/satwind_geoval_2018041500_m.nc4
+  obs filters:
+  - filter: Bounds Check
+    filter variables: 
+    - name: eastward_wind
+    - name: northward_wind
+    test variables:
+    - name: satwind_quality_ind_with_fc@MetaData
+    - name: satwind_quality_ind_no_fc@MetaData
+    #- name: Expected_Error@MetaData #Add to IODA converter
+    minvalue: 0.0
+    maxvalue: 110.0
+  #passedBenchmark: 142 # from northward (aft PreQC) + 6 from eastward (after Bounds) 
+  - filter: BlackList
+    filter variables:
+    - name: eastward_wind
+    - name: northward_wind
+    where:
+    - variable:
+        name:  land_area_fraction@GeoVaLs  # is this the right variable?
+      minvalue: 2.05 # should be 0(sea)
+  #passedBenchmark: 142
+  - filter: PreQC
+    maxvalue: 8           # pass if PreQC <= 8
+    minvalue: 0           # pass if PreQC >= 0 
+  #passedBenchmark: 30
+
+#  - filter: Background Check
+#    filter variables:
+#    - name: eastward_wind
+#    - name: northward_wind
+#    threshold: 100 # allow all winds to pass
+#    where:
+#    - variable: eastward_wind@PreQC
+#    - variable: northward_wind@PreQC
+#    minvalue: 3
+#    maxvalue: 3 
+#    action:
+#      name: inflate error # Is this the correct error? - woe 
+#      inflation factor: 1.2
+#  passedBenchmark: XXX
+
+  - filter: Bounds Check
+    filter variables:
+    - name: eastward_wind
+    - name: northward_wind
+    test variables:
+    - name: air_pressure@MetaData
+    - name: air_pressure@MetaData
+    minvalue: 10.0
+    maxvalue: 80000.00 # SHOULD BE 95000.0 but then all pass :)
+  passedBenchmark: 28  #30
+
+# ADD SPD, DIR, LNVD, inflating "qm" (PreQC)
+
+#    - Filter: BlackList
+#      filter variables: 
+#      - name: eastward_wind
+#      where:
+#      - variable:
+#          name:  sensor_zenith_angle@MetaData
+#        maxvalue: 50.0
+#    passedBenchmark: 17
+
+#    - Filter: Background Check
+#      filter variables:
+#      - name: eastward_wind        
+#      - name: northward_wind
+#      threshold: 1.2
+#      abs_threshold: 6.0
+#    passedBenchmark: 17 #8 # can't get this number with EstBenchmark  
+
+    #- Filter: TemporalThinning
+    #  random_seed: 0
+    #  amount: 0.8
+    #passedBenchmark: ??? #how do I estimate the Benchmark after TemporalThinning?
+    
+# NOTE:Only one "passedBenchmark" is allowed, it must be after the last filter 
