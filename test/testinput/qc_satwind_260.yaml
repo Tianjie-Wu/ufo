@@ -8,12 +8,13 @@ observations: # type 260|VIIRS|NC005091| id 224 and 225
   obs space:
     name: Satwind 
     obsdatain:
-      obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_ms.nc4 #71x2=142 U and Vobs
+      obsfile: /scratch1/NCEPDEV/da/Iliana.Genkova/JEDI/WORK/satwind_obs_2018041500_ms.nc4 #71x2=142 U and Vobs
     obsdataout:
-      obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_ms_test_filter.nc4
+      obsfile: /scratch1/NCEPDEV/da/Iliana.Genkova/JEDI/WORK/satwind_obs_2018041500_ms_test_filter.nc4
     simulated variables: [eastward_wind,northward_wind]
   geovals:
-    filename: Data/satwind_geoval_2018041500_m.nc4
+    filename: Data/satwind_geoval_2018041500_m.nc4 # how is this file created??
+# /scratch1/NCEPDEV/da/Iliana.Genkova/JEDI/WORK/ 
   obs filters:
   - filter: Bounds Check
     filter variables: 
