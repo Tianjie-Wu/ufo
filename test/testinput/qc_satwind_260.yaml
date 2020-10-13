@@ -16,8 +16,18 @@ observations: # type 260|VIIRS|NC005091| id 224 and 225
     filename: Data/satwind_geoval_2018041500_m.nc4 # how is this file created??
 # /scratch1/NCEPDEV/da/Iliana.Genkova/JEDI/WORK/ 
   obs filters:
+
+- filter: Bounds Check       # test min/max value of a single test var, but filter 2 or more vars
+    filter variables:
+    - name: eastward_wind
+    - name: northward_wind
+    test variables:
+    - name: Velocity@ObsFunction
+    maxvalue: 60
+  #passedBenchmark: 146
+
   - filter: Bounds Check
-    filter variables: 
+    filter variables:
     - name: eastward_wind
     - name: northward_wind
     test variables:
@@ -26,7 +36,8 @@ observations: # type 260|VIIRS|NC005091| id 224 and 225
     #- name: Expected_Error@MetaData #Add to IODA converter
     minvalue: 0.0
     maxvalue: 110.0
-  #passedBenchmark: 142 # from northward (aft PreQC) + 6 from eastward (after Bounds) 
+  #passedBenchmark: 142 # from northward (aft PreQC) + 6 from eastward (after Bounds)
+
   - filter: BlackList
     filter variables:
     - name: eastward_wind
