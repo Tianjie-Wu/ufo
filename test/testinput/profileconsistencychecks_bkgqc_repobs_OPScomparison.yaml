@@ -8,7 +8,7 @@ Sondes:
   obs space:
     name: Radiosonde
     obsdatain:
-      obsfile: Data/met_office_profile_consistency_checks_bkgqc_repobs.nc4
+      obsfile: Data/ufo/testinput_tier_1/met_office_profile_consistency_checks_bkgqc_repobs.nc4
       obsgrouping:
         group variable: "station_id"
         sort variable: "air_pressure"
@@ -17,10 +17,8 @@ Sondes:
   obs diagnostics:
   ProfileConsistencyChecks:
     Checks: ["Basic", "Time", "PermanentReject", "BackgroundTemperature", "BackgroundRelativeHumidity", "BackgroundWindSpeed", "BackgroundGeopotentialHeight"]
-    maxlev: 10000
     compareWithOPS: true
     flagBasicChecksFail: true
-    nErrorsFail: 8
     PrintStationID: true
     BChecks_Skip: true
     ModelLevels: false

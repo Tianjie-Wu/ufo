@@ -95,6 +95,10 @@ set ( filters_files
       obsfunctions/CLWRetMW.h
       obsfunctions/CLWRetSymmetricMW.cc
       obsfunctions/CLWRetSymmetricMW.h
+      obsfunctions/SIRetMW.cc
+      obsfunctions/SIRetMW.h
+      obsfunctions/SIRetSymmetricMW.cc
+      obsfunctions/SIRetSymmetricMW.h
       obsfunctions/HydrometeorCheckAMSUA.cc
       obsfunctions/HydrometeorCheckAMSUA.h
       obsfunctions/HydrometeorCheckATMS.cc
@@ -103,6 +107,8 @@ set ( filters_files
       obsfunctions/InterChannelConsistencyCheck.h
       obsfunctions/ObsErrorModelRamp.cc
       obsfunctions/ObsErrorModelRamp.h
+      obsfunctions/ObsErrorModelQuad.cc
+      obsfunctions/ObsErrorModelQuad.h
       obsfunctions/ObsFunction.cc
       obsfunctions/ObsFunction.h
       obsfunctions/ObsFunctionBase.cc
@@ -135,6 +141,10 @@ set ( filters_files
       obsfunctions/SCATRetMW.h
       obsfunctions/SymmCldImpactIR.cc
       obsfunctions/SymmCldImpactIR.h
+      variabletransforms/WindComponents.cc
+      variabletransforms/WindComponents.h
+      variabletransforms/WindSpeedAndDirection.cc
+      variabletransforms/WindSpeedAndDirection.h
 )
 
 PREPEND( _p_filters_files       "filters"       ${filters_files} )

@@ -13,6 +13,7 @@
 #include "eckit/config/Configuration.h"
 #include "eckit/exception/Exceptions.h"
 
+#include "oops/mpi/mpi.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"
 #include "oops/util/Random.h"
@@ -30,9 +31,8 @@ Locations::Locations(const eckit::mpi::Comm & comm) : comm_(comm) {
 
 // -------------------------------------------------------------------------------------------------
 
-Locations::Locations(const ioda::ObsSpace & odb,
-                     const util::DateTime & t1, const util::DateTime & t2) : comm_(odb.comm()) {
-  ufo_locs_init_f90(keyLoc_, odb, t1, t2);
+Locations::Locations(const ioda::ObsSpace & odb) : comm_(odb.comm()) {
+  ufo_locs_init_f90(keyLoc_, odb);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ Locations::Locations(const eckit::Configuration & conf,
   const util::DateTime bgn = util::DateTime(conf.getString("window begin"));
   const util::DateTime end = util::DateTime(conf.getString("window end"));
 
-  ioda::ObsSpace obspace(obsconf, comm, bgn, end);
+  ioda::ObsSpace obspace(obsconf, comm, bgn, end, oops::mpi::myself());
   const int nlocs = obspace.nlocs();
 
   std::vector<double> lats(nlocs);

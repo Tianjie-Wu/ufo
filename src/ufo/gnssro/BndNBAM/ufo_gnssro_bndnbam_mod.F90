@@ -58,8 +58,8 @@ subroutine ufo_gnssro_bndnbam_simobs(self, geovals, hofx, obss)
   integer, parameter                      :: ngrd    = 80 !num of new veritcal grids for bending angle computation
   integer                                 :: iobs, k, igrd, irec, icount, kk
   integer                                 :: nlev, nlev1, nlevExt, nlevCheck
-  type(ufo_geoval), pointer               :: t, q, gph, prs
-  real(kind_real), allocatable            :: gesT(:,:), gesZ(:,:), gesP(:,:), gesQ(:,:), gesTv(:,:)
+  type(ufo_geoval), pointer               :: t, q, gph, prs, zs
+  real(kind_real), allocatable            :: gesT(:,:), gesZ(:,:), gesP(:,:), gesQ(:,:), gesTv(:,:), gesZs(:)
   real(kind_real), allocatable            :: obsLat(:), obsImpP(:),obsLocR(:), obsGeoid(:), obsValue(:)
   integer(c_size_t), allocatable          :: obsRecnum(:)
   real(kind_real), allocatable            :: temperature(:)
@@ -74,8 +74,8 @@ subroutine ufo_gnssro_bndnbam_simobs(self, geovals, hofx, obss)
   integer,allocatable                     :: nlocs_begin(:)
   integer,allocatable                     :: nlocs_end(:)
   real(c_double)                          :: missing
-  integer,          allocatable           :: super_refraction_flag(:)
-  integer,          allocatable           :: super(:)
+  integer,          allocatable           :: super_refraction_flag(:), super(:), obs_max(:)
+  real(kind_real),  allocatable           :: toss_max(:)
   integer                                 :: sr_hgt_idx
   real(kind_real)                         :: gradRef, obsImpH
   integer,          allocatable           :: LayerIdx(:)
@@ -107,6 +107,8 @@ subroutine ufo_gnssro_bndnbam_simobs(self, geovals, hofx, obss)
 ! get variables from geovals
   call ufo_geovals_get_var(geovals, var_ts,  t)         ! air temperature
   call ufo_geovals_get_var(geovals, var_q,   q)         ! specific humidity
+  call ufo_geovals_get_var(geovals, var_sfc_geomz, zs)      ! surface geopotential height/surface altitude
+
   if (self%roconf%vertlayer .eq. "mass") then
     call ufo_geovals_get_var(geovals, var_prs,   prs)       ! pressure
     call ufo_geovals_get_var(geovals, var_z,     gph)       ! geopotential height
@@ -129,6 +131,7 @@ subroutine ufo_gnssro_bndnbam_simobs(self, geovals, hofx, obss)
   allocate(gesT(nlev,nlocs)) 
   allocate(gesTv(nlev,nlocs))
   allocate(gesQ(nlev,nlocs)) 
+  allocate(gesZs(nlocs))
 
 ! copy geovals to local background arrays
   iflip = 0
@@ -159,6 +162,7 @@ subroutine ufo_gnssro_bndnbam_simobs(self, geovals, hofx, obss)
        gesZ(k,:) = gph%vals(k,:)
     enddo
   end if
+       gesZs(:) = zs%vals(1,:)
 
 ! if background t and q are on mass layers, 
 !    while p and z are on interface layers, take the mean of t and q
@@ -171,7 +175,6 @@ subroutine ufo_gnssro_bndnbam_simobs(self, geovals, hofx, obss)
 !       to exactly reproduce nbam, t is converted to tv, tv mean is calcualted,
 !       then tv mean is converted to t mean
         gesT(k,:) = gesTv(k,:)/(1+ gesQ(k,:)*(rv_over_rd-1))
-!       gesT(k,:) = half* (gesT(k,:) + gesT(k-1,:))
      enddo
   end if
 
@@ -216,8 +219,6 @@ subroutine ufo_gnssro_bndnbam_simobs(self, geovals, hofx, obss)
      grids(igrd+1) = igrd * ds
   end do 
 
-  allocate(super(nrecs))
-
 ! bending angle forward model starts
   allocate(geomz(nlev))    ! geometric height
   allocate(radius(nlev))   ! tangent point radisu to earth center
@@ -225,18 +226,25 @@ subroutine ufo_gnssro_bndnbam_simobs(self, geovals, hofx, obss)
   allocate(refIndex(nlev))              !refactivity index n
   allocate(refXrad(0:nlevExt+1))        !x=nr, model conuterpart impact parameter
 
+  allocate(super(nlocs))
+  allocate(toss_max(nrecs))
+  allocate(obs_max(nrecs))
+
   iobs = 0
   hofx =  missing
-  super= 0
+  super = 0
+  obs_max  = 0
+  toss_max = 0
 
   rec_loop: do irec = 1, nrecs
+
     obs_loop: do icount = nlocs_begin(irec), nlocs_end(irec)
 
       iobs = icount
       do k = 1, nlev
 !        compute guess geometric height from geopotential height
-         call geop2geometric(obsLat(iobs), gesZ(k,iobs), geomz(k))
-         radius(k) = geomz(k) + obsGeoid(iobs) + obsLocR(iobs)   ! radius r
+         call geop2geometric(obsLat(iobs), gesZ(k,iobs)-gesZs(iobs), geomz(k))
+         radius(k) = geomz(k) + gesZs(iobs) + obsGeoid(iobs) + obsLocR(iobs)   ! radius r
 !        guess refactivity, refactivity index,  and impact parameter
          call compute_refractivity(gesT(k,iobs), gesQ(k,iobs), gesP(k,iobs),   &
                                 ref(k), self%roconf%use_compress)
@@ -256,9 +264,9 @@ subroutine ufo_gnssro_bndnbam_simobs(self, geovals, hofx, obss)
       indx=sIndx
       wi=min(max(1,indx),nlev)
       wi2=max(1,min(indx+1,nlev))
-      wf=indx-float(wi)
+      wf=sIndx-float(wi)
       wf=max(zero,min(wf,one))
-      temperature(iobs)=gesT(wi,iobs)*(one-wf)+gesT(wi2,iobs)*wf
+      temperature(iobs)=gesTv(wi,iobs)*(one-wf)+gesTv(wi2,iobs)*wf
 
 !     (2) super-refaction
 !     (2.1) GSI style super refraction check
@@ -276,21 +284,25 @@ subroutine ufo_gnssro_bndnbam_simobs(self, geovals, hofx, obss)
                   super_refraction_flag(iobs) = 1
                   cycle obs_loop
               endif
-!             relax to close-to-SR conditions, and check if obs is inside model SR layer
-              if(self%roconf%sr_steps > 1                 &
-                 .and. super(irec) == 0                   &
-                 .and. abs(gradRef) >= half*crit_gradRefr &
-                 .and. maxval(obsValue(nlocs_begin(irec):nlocs_end(irec))) >= 0.03 ) then
-                 sr_hgt_idx = maxloc(obsValue(nlocs_begin(irec):nlocs_end(irec)), dim=1)
-                 do kk = nlocs_begin(irec), nlocs_end(irec)
-                     if (obsImpP(kk) <= obsImpP(nlocs_begin(irec)-1+sr_hgt_idx))  &
-                        super_refraction_flag(kk)=2
-                 end do 
-                 super(irec) = 1
+           end do
 
-              end if
-           end do ! k
+!          relax to close-to-SR conditions, and check if obs is inside model SR layer
+           
+           if (self%roconf%sr_steps > 1                 &
+              .and. obsValue(iobs) >= 0.03 ) then
 
+               do k = nlevCheck, 1, -1
+                  gradRef = 1000.0 * (ref(k+1)-ref(k))/(radius(k+1)-radius(k))
+                  if (abs(gradRef) >= half*crit_gradRefr & 
+                     .and. super(iobs) == 0                   &
+                     .and. toss_max(irec) <= obsValue(iobs)) then
+                      obs_max(irec) = iobs
+                      toss_max(irec)= max(toss_max(irec), obsValue(iobs))
+                      super(iobs) = 1
+                  end if
+              end do ! k
+ 
+           end if   ! end if(self%roconf%sr_steps > 1 
         end if ! obsImpH <= six
 
 !    ROPP style super refraction check
@@ -326,6 +338,24 @@ subroutine ufo_gnssro_bndnbam_simobs(self, geovals, hofx, obss)
     end do obs_loop
   end do rec_loop
 
+  if (trim(self%roconf%super_ref_qc) == "NBAM" .and. self%roconf%sr_steps > 1 ) then
+     rec_loop2: do irec = 1, nrecs
+
+       if (obs_max(irec) > 0 ) then
+
+          obs_loop2: do k = nlocs_begin(irec), nlocs_end(irec)
+            obsImpH = (obsImpP(k) - obsLocR(k)) * r1em3
+            if (obsImpH<=six .and. obsImpP(k)<=obsImpP(obs_max(irec)) .and.  &
+                hofx(k)/=missing .and. super_refraction_flag(k)==0) then
+                super_refraction_flag(k)=2
+            end if
+          end do obs_loop2
+
+       end if
+
+     end do rec_loop2
+  end if
+
   deallocate(obsLat)
   deallocate(obsImpP)
   deallocate(obsLocR)
@@ -334,7 +364,8 @@ subroutine ufo_gnssro_bndnbam_simobs(self, geovals, hofx, obss)
   deallocate(gesZ) 
   deallocate(gesT) 
   deallocate(gesTv) 
-  deallocate(gesQ) 
+  deallocate(gesQ)
+  deallocate(gesZs) 
   deallocate(ref)
   deallocate(refIndex)
   deallocate(refXrad)
@@ -344,6 +375,8 @@ subroutine ufo_gnssro_bndnbam_simobs(self, geovals, hofx, obss)
   deallocate(nlocs_begin)
   deallocate(nlocs_end)
   deallocate(super)
+  deallocate(toss_max)
+  deallocate(obs_max)
 
   write(err_msg,*) myname, ": complete"
   call fckit_log%info(err_msg)
