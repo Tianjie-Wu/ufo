@@ -55,23 +55,23 @@ find_package( Eigen3 REQUIRED NO_MODULE HINTS
 include_directories( ${EIGEN3_INCLUDE_DIRS} )
 
 # eckit
-ecbuild_use_package( PROJECT eckit VERSION 1.11.6 REQUIRED )
+ecbuild_find_package( NAME eckit VERSION 1.11.6 REQUIRED )
 include_directories( ${ECKIT_INCLUDE_DIRS} )
 
 # fckit
-ecbuild_use_package( PROJECT fckit VERSION 0.7.0 REQUIRED )
+ecbuild_find_package( NAME fckit VERSION 0.7.0 REQUIRED )
 include_directories( ${FCKIT_INCLUDE_DIRS} )
 
 # ioda
-ecbuild_use_package( PROJECT ioda VERSION 1.0.0 REQUIRED )
+ecbuild_find_package( NAME ioda VERSION 1.0.0 REQUIRED )
 include_directories( ${IODA_INCLUDE_DIRS} )
 
 # oops
-ecbuild_use_package( PROJECT oops VERSION 1.0.0 REQUIRED )
+ecbuild_find_package( NAME oops VERSION 1.0.0 REQUIRED )
 include_directories( ${OOPS_INCLUDE_DIRS} )
 
 # crtm
-ecbuild_use_package( PROJECT crtm VERSION 2.3 QUIET )
+ecbuild_find_package( NAME crtm VERSION 2.3 QUIET )
 if( ${CRTM_FOUND} )
   message(STATUS "CRTM FOUND; Including CRTM Observation Operator")
   include_directories( ${CRTM_INCLUDE_DIRS} )
@@ -80,7 +80,7 @@ else( ${CRTM_FOUND} )
 endif( ${CRTM_FOUND} )
 
 # RTTOV
-ecbuild_use_package( PROJECT rttov VERSION 12.1.0 QUIET )
+ecbuild_find_package( NAME rttov VERSION 12.1.0 QUIET )
 if( ${RTTOV_FOUND} )
     message(STATUS "RTTOV FOUND; Including RTTOV Radiance Observation Operator")
     include_directories( ${RTTOV_INCLUDE_DIRS} )
@@ -89,7 +89,7 @@ else( ${RTTOV_FOUND} )
 endif( ${RTTOV_FOUND} )
 
 # GSW
-ecbuild_use_package( PROJECT gsw QUIET )
+ecbuild_find_package( NAME gsw QUIET )
 if( ${GSW_FOUND} )
     message(STATUS "GSW FOUND; Including Marine Observation Operators")
     include_directories( ${GSW_INCLUDE_DIRS} )
@@ -98,7 +98,7 @@ else( ${GSW_FOUND} )
 endif( ${GSW_FOUND} )
 
 # ROPP-UFO
-ecbuild_use_package( PROJECT ropp-ufo QUIET )
+ecbuild_find_package( NAME ropp-ufo QUIET )
 if( ${ROPP-UFO_FOUND} )
     message(STATUS "ROPP FOUND; Including GNSSRO Bending angle ROPP Operators")
 else( ${ROPP-UFO_FOUND} )
@@ -106,7 +106,7 @@ else( ${ROPP-UFO_FOUND} )
 endif( ${ROPP-UFO_FOUND} )
 
 # GEOS-AERO
-ecbuild_use_package( PROJECT geos-aero QUIET )
+ecbuild_find_package( NAME geos-aero QUIET )
 if( ${GEOS-AERO_FOUND} )
     message(STATUS "GEOS-AERO FOUND; Including AOD operator from GEOS")
     include_directories( ${GEOSAERO_INCLUDE_DIRS} )
